@@ -1,13 +1,19 @@
 import Vue from 'vue';
 import Router from 'vue-router'
-import Login from '../components/page/Login';
+import login from '../components/page/login';
+import manage from '../components/page/manage';
 
 Vue.use(Router);
 
 const routes = [
     {
         path: '/',
-        component: Login
+        component: login
+    },{
+        path:'/manage',
+        component: manage,
+        name: '',
+        
     }
 ]
 
