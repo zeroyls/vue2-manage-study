@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Router from 'vue-router'
 import login from '../components/page/login';
 import manage from '../components/page/manage';
+import home from '../components/page/home'
 
 Vue.use(Router);
 
@@ -13,7 +14,14 @@ const routes = [
         path:'/manage',
         component: manage,
         name: '',
-        
+        children:[
+            {
+                path: '',
+                component: home,
+                meta: []
+            }
+        ]
+
     }
 ]
 
