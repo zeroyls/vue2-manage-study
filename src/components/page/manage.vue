@@ -48,6 +48,10 @@
 export default {
     computed:{
         defaultActive: function(){
+            
+            var a = this.$route.path;
+            console.log(a)
+            console.log(a.replace('/', ''))
             return this.$route.path.replace('/', '')
         }
     }
