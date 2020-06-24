@@ -34,7 +34,7 @@ export default {
 </script>
 
 <style lang = "less" scoped>
-    @import '../../style/mixin.less';
+    @import '../../style/mixin';
     .login_page{
         background-color: #325057;
     }

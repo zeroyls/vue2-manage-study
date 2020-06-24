@@ -49,7 +49,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-    @import '../../style/mixin.less';
+    @import '../../style/mixin';
     .edit_container{
         padding: 40px;
         margin-bottom: 40px;

@@ -31,6 +31,6 @@ export default {
 
 
 <style lang="less">
-	@import '../../style/mixin.less';
+	@import '../../style/mixin';
 	
 </style>

@@ -200,7 +200,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-    @import '../../style/mixin.less';
+    @import '../../style/mixin';
     .demo-table-expand{
         font-size: 0;
         label{

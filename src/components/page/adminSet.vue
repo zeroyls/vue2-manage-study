@@ -44,7 +44,7 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-    @import '../../style/mixin.less';
+    @import '../../style/mixin';
     .admin_set{
         width: 60%;
         background-color: #F9FAFC;

@@ -19,7 +19,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-    @import '../../style/mixin.less';
+    @import '../../style/mixin';
     .explain_text{
         margin-top: 20px;
         text-align: center;

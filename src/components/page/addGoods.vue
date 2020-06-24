@@ -200,7 +200,7 @@ export default {
 </script>
 
 <style lang="less">
-    @import '../../style/mixin.less';
+    @import '../../style/mixin';
 	.add_category_row{
 		height: 0;
 		overflow: hidden;

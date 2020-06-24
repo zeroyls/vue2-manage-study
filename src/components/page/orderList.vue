@@ -64,7 +64,7 @@ export default {
 </script>
 
 <style lang="less">
-	@import '../../style/mixin.less';
+	@import '../../style/mixin';
     .table_container{
         padding: 20px;
     }
