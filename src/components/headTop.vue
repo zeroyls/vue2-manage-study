@@ -15,8 +15,20 @@
 </template>
 
 <script>
+import {mapState, mapActions} from 'vuex';
+
 export default {
-    
+    created(){
+        if(!(this.adminInfo && this.adminInfo.id)){
+            this.getAdminInfo();
+        }  
+    },
+    computed: {
+        ...mapState(['adminInfo'])
+    },
+    methods: {
+        ...mapActions(['getAdminInfo'])
+    }
 }
 </script>
 

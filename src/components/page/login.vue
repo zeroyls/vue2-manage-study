@@ -1,14 +1,13 @@
 <template>
     <div class = "login_page fillcontain">
         <transition name = "form-fade" mode = "in-out">
-            <section class = "form_container">
+            <section class = "form_container" v-show = "showLogin">
                 <div class ="manage_tip">
                     <p>elm后台管理系统</p>
                 </div>
                 <el-form :model = "loginForm" :rules="rules" ref = "loginForm">
                     <el-form-item prop = "username">
                         <el-input placeholder="用户名" v-model="loginForm.username">
-                            <span>dsfsd</span>
                         </el-input>
                     </el-form-item>
                     <el-form-item prop = "password">
@@ -29,6 +28,7 @@
 
 <script>
 import {login } from '@/api/getData'
+import {mapActions, mapState} from 'vuex'
 export default {
     data(){
         return {
@@ -47,10 +47,21 @@ export default {
                     message: '请输入密码',
                     trigger: 'blur'
                 }]
-            }
+            },
+            showLogin: false
+        }
+    },
+    computed: {
+        ...mapState(['adminInfo'])
+    },
+    mounted(){
+        this.showLogin = true;
+        if(!this.adminInfo.id){
+            this.getAdminInfo();
         }
     },
     methods: {
+        ...mapActions(['getAdminInfo']),
         async submitForm(formName){
             this.$refs[formName].validate(async (valid ) => {
                 if(valid){
@@ -64,7 +75,7 @@ export default {
                     }else{
                         this.$message({
                             type:'error',
-                            message: res.message
+                            message: res.error_type
                         })
                     }
                 }else{
@@ -77,6 +88,17 @@ export default {
                 }
             });
 
+        }
+    },
+    watch:{
+        adminInfo: function(newAdminInfo){
+            if(newAdminInfo && newAdminInfo.id){
+                this.$message({
+                    type: 'success',
+                    message: '检测到您之前登录过，将自动登录'
+                });
+                this.$router.push('manage')
+            }
         }
     }
 }
