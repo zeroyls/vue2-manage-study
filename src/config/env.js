@@ -10,7 +10,7 @@ let baseImgPath;
 
 if(process.env.NODE_ENV === 'development'){
     baseUrl = "http://localhost:8001";
-    baseImgPath = "/img/";
+    baseImgPath = "http://localhost:8001/img/";
 }else{
     baseUrl = 'localhost';
     baseImgPath = 'localhost/img/'

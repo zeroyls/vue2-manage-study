@@ -12,12 +12,14 @@ const state = {
 
 const mutations = {
     saveAdminInfo(state, adminInfo){
+        console.log("adminInfo:", adminInfo)
         state.adminInfo = adminInfo;
     }
 }
 
 const actions = {
     async getAdminInfo({commit}){
+        console.log("getAdminInfo")
         try{
             const res = await getAdminInfo()
             if(res.error_code === 0){
@@ -26,7 +28,7 @@ const actions = {
                 throw new Error(res.error_type);
             }
         }catch(err ){
-
+            
         }
     }
 }
