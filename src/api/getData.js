@@ -9,3 +9,16 @@ export const signout = () => fetch('/admin/signout');
 
 // 获取当前登录用户的信息
 export const getAdminInfo = () => fetch('/admin/info')
+
+//添加商铺
+export const addShop = data => fetch('/shopping/shop/add', data, 'POST');
+
+
+//helper function
+//获取定位城市
+export const cityGuess = () => fetch('/v1/cities', {type: 'guess'});
+
+export const searchplace = (cityid, value ) => fetch('/v1/search', {
+    city_id: cityid,
+    keyword: value,
+})

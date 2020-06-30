@@ -8,7 +8,13 @@
                         <el-input v-model = "formData.name"></el-input>
                     </el-form-item>
                     <el-form-item label = "详细地址" prop = "address">
-                        <el-autocomplete></el-autocomplete>
+                        <el-autocomplete
+                            v-model = "formData.address"
+                            :fetch-suggestions="querySearchAsync"
+                            placeholder="请输入地址"
+                            @select = "addressSelect"
+                        ></el-autocomplete>
+                        <span> 当前城市： {{city.name}}</span>
                     </el-form-item>
                     <el-form-item label = "联系电话" prop = "phone">
                         <el-input v-model.number="formData.phone" maxlength="11"></el-input>
@@ -125,10 +131,12 @@
 </template>
 
 <script>
+import {cityGuess, searchplace} from '@/api/getData';
 import headTop from '../headTop'
 export default {
     data(){
         return {
+            city: {},//定位到的城市
             formData: [],
             rules: {},
             options: [{
@@ -152,7 +160,48 @@ export default {
             }],
         }
     },
+    mounted(){
+        this.initData();
+    },
     methods: {
+        async initData(){
+            try{
+                const res = await cityGuess();
+                if(res.error_code === 0){
+                    this.city = res.cityInfo;
+                }
+            }catch(err ){
+                console.log(err)
+            }
+        },
+
+        //地址填写
+        async querySearchAsync(queryString, cb ){
+            if(queryString){
+                try{
+                    const res = await searchplace(this.city.id, queryString);
+                    let cityList = [];
+                    if(res.error_code === 0){
+                        cityList = res.cityList;
+                    }else{
+                        throw new Error(res.error_type);
+                    }
+                    cityList.map(item => {
+                        item.value = item.address;
+                        return item;
+                    })
+                    cb(cityList);
+                }catch(err ){
+                    console.log(err );
+                }
+            }
+        },
+
+        addressSelect(address){
+            this.formData.latitude = address.latitude;
+            this.formData.longtitude = address.longtitude;
+        },
+
         selectActivity(){
             this.$prompt('请输入活动详情', '提示', {
                 confirmButtonText: '确定',
