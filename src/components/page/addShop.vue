@@ -1,7 +1,7 @@
 <template>
     <div>
         <head-top></head-top>
-        <el-row>
+        <el-row style = "margin-top: 20px">
             <el-col :span = "12" :offset = "4">
                 <el-form :model = "formData" :rules = "rules">
                     <el-form-item label = "店铺名称" prop = "name">
@@ -77,13 +77,37 @@
 						</el-time-select>
                     </el-form-item>
                     <el-form-item label = "上传店铺头像">
-                        <el-upload></el-upload>
+                        <el-upload
+                            class = "avatar-uploader"
+                            :action = "baseUrl + '/v1/addimg/shop'"
+                            :show-file-list = "false"
+                            :on-success = "handleShopAvatarSuccess"
+                            :before-upload = "beforeAvatarUpload">
+                            <img v-if = "formData.image_path" :src = "baseImgPath + formData.image_path" class = "avatar"/>
+                            <i v-else class = "el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
                     </el-form-item>
                     <el-form-item label = "上传营业执照">
-                        <el-upload></el-upload>
+                        <el-upload
+                            class = "avatar-uploader"
+                            :action = "baseUrl + '/v1/addimg/shop'"
+                            :show-file-list = "false"
+                            :on-success = "handleBusinessAvatarSuccess"
+                            :before-upload = "beforeAvatarUpload">
+                            <img v-if = "formData.business_license_image" :src = "baseImgPath + formData.business_license_image" class = "avatar"/>
+                            <i v-else class = "el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
                     </el-form-item>
                     <el-form-item label = "上传餐饮服务许可证">
-                        <el-upload></el-upload>
+                        <el-upload
+                            class = "avatar-uploader"
+                            :action = "baseUrl + '/v1/addimg/shop'"
+                            :show-file-list = "false"
+                            :on-success = "handleServiceAvatarSuccess"
+                            :before-upload = "beforeAvatarUpload">
+                            <img v-if = "formData.catering_service_license_image" :src = "baseImgPath + formData.catering_service_license_image" class = "avatar"/>
+                            <i v-else class = "el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
                     </el-form-item>
                     <el-form-item label = "优惠活动">
                         <el-select v-model = "activityValue" @change = "selectActivity" :placeholder="activityValue">
@@ -134,12 +158,19 @@
 
 <script>
 import {cityGuess, searchplace, listShopCategory} from '@/api/getData';
+import {baseUrl, baseImgPath} from '@/config/env'
 import headTop from '../headTop'
 export default {
     data(){
         return {
+            baseUrl,
+            baseImgPath,
             city: {},//定位到的城市
-            formData: [],
+            formData: {
+                image_path: '',
+                business_license_image: '',
+                catering_service_license_image: ''
+            },
             rules: {},
             activityOptions: [{
                 value: '满减优惠',
@@ -281,8 +312,46 @@ export default {
                 });
             });
         },
+
         handleDeleteActivity(index){
             this.activities.splice(index)
+        },
+
+        handleShopAvatarSuccess(res, file){
+            if(res.error_code === 0){
+                this.formData.image_path = res.image_path;
+            }else{
+                this.$message.error('上传图片失败！')
+            }
+        },
+
+        handleBusinessAvatarSuccess(res, file){
+            if(res.error_code === 0){
+                this.formData.business_license_image = res.image_path;
+            }else{
+                this.$message.error('上传图片失败！')
+            }
+        },
+
+        
+        handleServiceAvatarSuccess(res, file){
+            if(res.error_code === 0){
+                this.formData.catering_service_license_image = res.image_path;
+            }else{
+                this.$message.error('上传图片失败！')
+            }
+        },
+
+        beforeAvatarUpload(file){
+            const isRightType = (file.type === 'image/jpeg') || (file.type === 'image/png');
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if(!isRightType){
+                this.$message.error('上传头像图片只能是JPG格式或者png格式');
+            }
+            if(!isLt2M){
+                this.$message.error('上传头像图片大小不能超过2MB');
+            }
+            return isRightType && isLt2M;
         }
     },
     components: {
@@ -290,3 +359,30 @@ export default {
     }
 }
 </script>
+
+<style lang="less" >
+@import '../../style/mixin';
+.avatar-uploader .el-upload{
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.avatar-uploader .el-upload:hover{
+    border-color: #20a0ff;
+}
+.avatar-uploader-icon{
+    font-size: 28px;
+    color: #8c939d;
+    width: 120px;
+    height: 120px;
+    line-height: 120px;
+    text-align: center;
+}
+.avatar{
+    width: 120px;
+    height: 120px;
+    display: block;
+}
+</style>
