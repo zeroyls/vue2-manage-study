@@ -88,7 +88,7 @@
                     <el-form-item label = "优惠活动">
                         <el-select v-model = "activityValue" @change = "selectActivity" :placeholder="activityValue">
                             <el-option
-                                v-for = "item in options"
+                                v-for = "item in activityOptions"
                                 :key = "item.value"
                                 :label = "item.label"
                                 :value = "item.value">
@@ -141,7 +141,7 @@ export default {
             city: {},//定位到的城市
             formData: [],
             rules: {},
-            options: [{
+            activityOptions: [{
                 value: '满减优惠',
                 label: '满减优惠'
             }, {
