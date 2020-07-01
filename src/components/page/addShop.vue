@@ -281,8 +281,8 @@ export default {
                 });
             });
         },
-        handleDeleteActivity(){
-
+        handleDeleteActivity(index){
+            this.activities.splice(index)
         }
     },
     components: {
