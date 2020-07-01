@@ -10,6 +10,9 @@ export const signout = () => fetch('/admin/signout');
 // 获取当前登录用户的信息
 export const getAdminInfo = () => fetch('/admin/info')
 
+//获取店铺分类
+export const listShopCategory = () => fetch('/shopping/category/list');
+
 //添加商铺
 export const addShop = data => fetch('/shopping/shop/add', data, 'POST');
 

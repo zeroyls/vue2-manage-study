@@ -12,6 +12,7 @@
                             v-model = "formData.address"
                             :fetch-suggestions="querySearchAsync"
                             placeholder="请输入地址"
+                            style = "width: 100%"
                             @select = "addressSelect"
                         ></el-autocomplete>
                         <span> 当前城市： {{city.name}}</span>
@@ -22,13 +23,14 @@
                     <el-form-item label = "店铺简介" prop = "description">
                         <el-input v-model = "formData.description"></el-input>
                     </el-form-item>
-                    <el-form-item v-model = "店铺标语" prop = "promotion_info" >
+                    <el-form-item label = "店铺标语" prop = "promotion_info" >
                         <el-input v-model = "formData.promotion_info"></el-input>
                     </el-form-item>
                     <el-form-item label = "店铺分类">
                         <el-cascader
                             :options="categoryOptions"
                             v-model = "selectedCategory"
+                            change-on-select
                             >
                         </el-cascader>
                     </el-form-item>
@@ -131,7 +133,7 @@
 </template>
 
 <script>
-import {cityGuess, searchplace} from '@/api/getData';
+import {cityGuess, searchplace, listShopCategory} from '@/api/getData';
 import headTop from '../headTop'
 export default {
     data(){
@@ -158,6 +160,8 @@ export default {
                 name: '满减优惠',
                 description: '满30减5，满60减8',
             }],
+            categoryOptions: [],
+            selectedCategory: ['快餐便当', '简餐']
         }
     },
     mounted(){
@@ -169,6 +173,30 @@ export default {
                 const res = await cityGuess();
                 if(res.error_code === 0){
                     this.city = res.cityInfo;
+                }
+                const resCategory = await listShopCategory();
+                let categories = [];
+                if(resCategory.error_code === 0){
+                    categories = resCategory.categories;
+                    categories.forEach(item => {
+                        if(item.sub_categories.length){
+                            const addnew = {
+                                value: item.name,
+                                label: item.name,
+                                children: []
+                            }
+                            item.sub_categories.forEach((subitem, index) => {
+                                if(index == 0){
+                                    return;
+                                }
+                                addnew.children.push({
+                                    value: subitem.name,
+                                    label: subitem.name
+                                })
+                            })
+                            this.categoryOptions.push(addnew)
+                        }
+                    })
                 }
             }catch(err ){
                 console.log(err)
