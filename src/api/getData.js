@@ -19,6 +19,9 @@ export const addShop = data => fetch('/shopping/shop/add', data, 'POST');
 //获取商铺列表
 export const getShops = data => fetch('/shopping/shop/list', data);
 
+//获取商铺列表
+export const getShopsCount = () => fetch('/shopping/shop/getCount');
+
 
 //helper function
 //获取定位城市

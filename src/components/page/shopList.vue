@@ -65,7 +65,13 @@
                 </el-table-column>
             </el-table>
             <div class = "Pagination">
-                <el-pagination>
+                <el-pagination
+                    @size-change = "handleSizeChange"
+                    @current-change = "handleCurrentChange"
+                    :current-page = "currentPage"
+                    :page-size = "20"
+                    layout = "total, prev, pager, next"
+                    :total = "count">
                 </el-pagination>
             </div>
             <el-dialog title = "修改店铺信息" :visible.sync = "dialogFormVisible">
@@ -113,7 +119,7 @@
 
 
 <script>
-import {cityGuess, getShops} from '@/api/getData'
+import {cityGuess, getShops, getShopsCount} from '@/api/getData'
 import headTop from '../headTop'
 export default {
     data(){
@@ -122,6 +128,9 @@ export default {
             tableData: [],
             limit:20,
             offset: 0,
+            currentPage:1,
+            count: 0,
+
             dialogFormVisible: false,
             selectedShop: {},//传入对话框的参数
             selectedCategory: {},//级联
@@ -161,6 +170,10 @@ export default {
                 if(res.error_code === 0){
                     this.city = res.cityInfo;
                 }
+                const resCount = await getShopsCount();
+                if(resCount.error_code === 0){
+                    this.count = resCount.count;
+                }
                 await this.getShops();
             }catch(err ){
                 console.log(err)
@@ -186,6 +199,17 @@ export default {
                 })
             }
         },
+
+        handleSizeChange(val){
+            consoel.log(`每页${val}条`);  
+        },
+
+        handleCurrentChange(val){
+            this.currentPage = val;
+            this.offset = (val - 1) * this.limit;
+            this.getShops();
+        },
+        
         // 表格的方法
         handleEdit(index, row){
             this.dialogFormVisible = true;
