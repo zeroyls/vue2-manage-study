@@ -3,7 +3,7 @@
         <head-top></head-top>
         <el-row style = "margin-top: 20px">
             <el-col :span = "12" :offset = "4">
-                <el-form :model = "formData" :rules = "rules">
+                <el-form :model = "formData" :rules = "rules" ref = "formData">
                     <el-form-item label = "店铺名称" prop = "name">
                         <el-input v-model = "formData.name"></el-input>
                     </el-form-item>
@@ -121,6 +121,9 @@
                     </el-form-item>
                     <el-table
                         :data = "activities"
+                        style = "min-width: 600px; margin-bottom: 20px"
+                        align = "center"
+                        :row-class-name="tableRowClassName"
                         >
                         <el-table-column
                             prop = "icon_name"
@@ -147,7 +150,7 @@
                             </template>
                         </el-table-column>
                     </el-table>
-                    <el-form-item>
+                    <el-form-item class = "button_submit">
                         <el-button type = "primary" @click = "submitForm('formData')">立即创建</el-button>
                     </el-form-item>
                 </el-form>
@@ -157,7 +160,7 @@
 </template>
 
 <script>
-import {cityGuess, searchplace, listShopCategory} from '@/api/getData';
+import {cityGuess, searchplace, listShopCategory, addShop} from '@/api/getData';
 import {baseUrl, baseImgPath} from '@/config/env'
 import headTop from '../headTop'
 export default {
@@ -167,11 +170,35 @@ export default {
             baseImgPath,
             city: {},//定位到的城市
             formData: {
+                name: '',
+                address: '',
+                latitude: '',
+                longitude: '',
+                description: '',
+                phone: '',
+                promotion_info: '',
+                float_delivery_fee: 5,
+                float_minimum_order_amount: 20,
+                is_premium:true,
+                delivery_mode: true,
+                new: true,
+                bao: true,
+                zhun: true,
+                piao: true,
+                startTime: '',
+                endTime: '',
                 image_path: '',
                 business_license_image: '',
                 catering_service_license_image: ''
             },
-            rules: {},
+            rules: {
+                name: [{required: true, message: '请输入店铺名称', trigger: 'blur'}],
+                address: [{required: true, message: '请输入详细地址', trigger: 'blur'}],
+                phone: [
+                    {required: true, message: '请输入联系电话'},
+                    {type: 'number', message: '电话号码必须是数字'}
+                ]
+            },
             activityOptions: [{
                 value: '满减优惠',
                 label: '满减优惠'
@@ -258,7 +285,7 @@ export default {
 
         addressSelect(address){
             this.formData.latitude = address.latitude;
-            this.formData.longtitude = address.longtitude;
+            this.formData.longitude = address.longitude;
         },
 
         selectActivity(){
@@ -352,6 +379,73 @@ export default {
                 this.$message.error('上传头像图片大小不能超过2MB');
             }
             return isRightType && isLt2M;
+        },
+
+        //TODO:验证
+        tableRowClassName({row, index}){
+            if(index === 1){
+                return 'info-row';
+            }else if(index === 3){
+                return 'positive-row';
+            }
+            return ''
+        },
+
+        submitForm(formName){
+            this.$refs[formName].validate(async (valid ) => {
+                if(valid){
+                    Object.assign(this.formData, {activities: this.activities}, {category: this.selectedCategory.join('/')})
+                    try{
+                        let result = await addShop(this.formData);
+                        if(result.error_code === 0){
+                            this.$message({
+                                type: 'success',
+                                message: '添加成功'
+                            })
+                            this.formData = {
+                                name: '',
+                                address: '',
+                                latitude: '',
+                                longitude: '',
+                                description: '',
+                                phone: '',
+                                promotion_info: '',
+                                float_delivery_fee: 5,
+                                float_minimum_order_amount: 20,
+                                is_premium:true,
+                                delivery_mode: true,
+                                new: true,
+                                bao: true,
+                                zhun: true,
+                                piao: true,
+                                startTime: '',
+                                endTime: '',
+                                image_path: '',
+                                business_license_image: '',
+                                catering_service_license_image: ''
+                            };
+                            this.selectedCategory = ['快餐便当', '简餐'];
+                            this.activities = [{
+                                icon_name: '减',
+                                name: '满减优惠',
+                                description: '满30减5，满60减8',
+                            }];
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: result.error_type
+                            })
+                        }
+                    }catch(err ){
+                        this.$notify.error({
+                            title: '错误',
+                            message: '请检查输入是否正确',
+                            offset: 100
+                        })
+                        return false
+                    }
+                }
+            })
         }
     },
     components: {
@@ -362,6 +456,9 @@ export default {
 
 <style lang="less" >
 @import '../../style/mixin';
+.button_submit{
+    text-align: center;
+}
 .avatar-uploader .el-upload{
     border: 1px dashed #d9d9d9;
     border-radius: 6px;
@@ -384,5 +481,13 @@ export default {
     width: 120px;
     height: 120px;
     display: block;
+}
+
+.el-table .info-row{
+    background: #c9e5f5;
+}
+
+.el-table .positive-row{
+    background: #e2f0e4;
 }
 </style>
