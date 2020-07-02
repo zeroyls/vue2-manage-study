@@ -113,16 +113,15 @@
 
 
 <script>
+import {cityGuess, getShops} from '@/api/getData'
 import headTop from '../headTop'
 export default {
     data(){
         return {
-            tableData: [{
-                name: "店铺1",
-                address: "地址1",
-                description: "店铺介绍1",
-
-            }],
+            city: {},
+            tableData: [],
+            limit:20,
+            offset: 0,
             dialogFormVisible: false,
             selectedShop: {},//传入对话框的参数
             selectedCategory: {},//级联
@@ -152,7 +151,41 @@ export default {
             ]
         }
     },
+    created(){
+        this.initData();
+    },
     methods: {
+        async initData(){
+            try{
+                const res = await cityGuess();
+                if(res.error_code === 0){
+                    this.city = res.cityInfo;
+                }
+                await this.getShops();
+            }catch(err ){
+                console.log(err)
+            }
+        },
+        async getShops(){
+            try{
+                const {latitude, longitude} = this.city;
+                const {limit, offset} = this;
+                const res = await getShops({
+                    latitude,
+                    longitude,
+                    limit,
+                    offset
+                });
+                if(res.error_code === 0){
+                    this.tableData = res.restaurants;
+                }
+            }catch(err ){
+                this.$message({
+                    type:'error',
+                    message: '获取店铺列表错误'
+                })
+            }
+        },
         // 表格的方法
         handleEdit(index, row){
             this.dialogFormVisible = true;
