@@ -85,9 +85,9 @@
                             :fetch-suggestions="querySearchAsync"
                             placeholder="请输入地址"
                             style="width: 100%"
-                            @select = "selectAddress"
+                            @select = "addressSelect"
                         ></el-autocomplete>
-                        <span>当前城市：{{}}</span>
+                        <span>当前城市：{{city.name}}</span>
                     </el-form-item>
                     <el-form-item label = "店铺介绍" label-width = "100px">
                         <el-input v-model= "selectedShop.description"></el-input>
@@ -103,9 +103,16 @@
                         </el-cascader>
                     </el-form-item>
                     <el-form-item label = "商铺图片" label-width = "100px">
-                        <!-- <el-upload
+                        <el-upload
+                            class = "avatar-uploader"
+                            :action = "baseUrl + '/v1/addimg/shop'"
+                            :show-file-list="false"
+                            :on-success = "handleServiceAvatarSuccess"
+                            :before-upload = "beforeAvatarUpload"
                             >
-                        </el-upload> -->
+                            <img v-if = "selectedShop.image_path" :src = "baseImgPath + selectedShop.image_path" class = "avatar">
+                            <i v-else class = "el-icon-plus avartar-uploader-icon"></i>
+                        </el-upload>
                     </el-form-item>
                 </el-form>
                 <div slot = "footer" class = "dialog-footer">
@@ -119,11 +126,14 @@
 
 
 <script>
-import {cityGuess, getShops, getShopsCount} from '@/api/getData'
+import {cityGuess, searchplace, listShopCategory, getShops, getShopsCount} from '@/api/getData'
+import {baseUrl, baseImgPath} from '@/config/env'
 import headTop from '../headTop'
 export default {
     data(){
         return {
+            baseUrl,
+            baseImgPath,
             city: {},
             tableData: [],
             limit:20,
@@ -133,31 +143,8 @@ export default {
 
             dialogFormVisible: false,
             selectedShop: {},//传入对话框的参数
-            selectedCategory: {},//级联
-            categoryOptions: [
-                {
-                    label:"一级菜单1",
-                    value: "1",
-                    children: [{
-                        label: "11",
-                        value: "11"
-                    },{
-                        label: "12",
-                        value: "12"
-                    }]
-                },
-                                {
-                    label:"一级菜单2",
-                    value: "2",
-                    children: [{
-                        label: "21",
-                        value: "21"
-                    },{
-                        label: "22",
-                        value: "22"
-                    }]
-                }
-            ]
+            selectedCategory: [],//级联
+            categoryOptions: []
         }
     },
     created(){
@@ -170,6 +157,7 @@ export default {
                 if(res.error_code === 0){
                     this.city = res.cityInfo;
                 }
+                
                 const resCount = await getShopsCount();
                 if(resCount.error_code === 0){
                     this.count = resCount.count;
@@ -179,6 +167,34 @@ export default {
                 console.log(err)
             }
         },
+
+        async listShopCategory(){
+            const resCategory = await listShopCategory();
+            let categories = [];
+            if(resCategory.error_code === 0){
+                categories = resCategory.categories;
+                categories.forEach(item => {
+                    if(item.sub_categories.length){
+                        const addnew = {
+                            value: item.name,
+                            label: item.name,
+                            children: []
+                        }
+                        item.sub_categories.forEach((subitem, index) => {
+                            if(index == 0){
+                                return;
+                            }
+                            addnew.children.push({
+                                value: subitem.name,
+                                label: subitem.name
+                            })
+                        })
+                        this.categoryOptions.push(addnew)
+                    }
+                })
+            }
+        },
+
         async getShops(){
             try{
                 const {latitude, longitude} = this.city;
@@ -201,7 +217,7 @@ export default {
         },
 
         handleSizeChange(val){
-            consoel.log(`每页${val}条`);  
+            console.log(`每页${val}条`);  
         },
 
         handleCurrentChange(val){
@@ -209,33 +225,52 @@ export default {
             this.offset = (val - 1) * this.limit;
             this.getShops();
         },
-        
+
         // 表格的方法
         handleEdit(index, row){
             this.dialogFormVisible = true;
             this.selectedShop = row;
+            this.selectedCategory = row.category.split('/');
+            if(!this.categoryOptions.length){
+                this.listShopCategory();
+            }
         },
+
         addFood(index, row){
 
         },
+
         handleDelete(index, row){
 
         },
 
 
         //对话框里的方法
-        querySearchAsync(queryString, cb){
-            console.log(queryString);
-            cb([
-                { "value": "三全鲜食（北新泾店）", "address": "长宁区新渔路144号" },
-                { "value": "Hot honey 首尔炸鸡（仙霞路）", "address": "上海市长宁区淞虹路661号" },
-                { "value": "新旺角茶餐厅", "address": "上海市普陀区真北路988号创邑金沙谷6号楼113" },
-                { "value": "泷千家(天山西路店)", "address": "天山西路438号" },
-            ])
+        //地址填写
+        async querySearchAsync(queryString, cb ){
+            if(queryString){
+                try{
+                    const res = await searchplace(this.city.id, queryString);
+                    let cityList = [];
+                    if(res.error_code === 0){
+                        cityList = res.cityList;
+                    }else{
+                        throw new Error(res.error_type);
+                    }
+                    cityList.map(item => {
+                        item.value = item.address;
+                        return item;
+                    })
+                    cb(cityList);
+                }catch(err ){
+                    console.log(err );
+                }
+            }
         },
 
-        selectAddress(item){
-            console.log(item)
+        addressSelect(address){
+            this.selectedShop.latitude = address.latitude;
+            this.selectedShop.longitude = address.longitude;
         },
 
         updateShop(){
@@ -262,6 +297,33 @@ export default {
             width: 50%;
         }
 
+    }
+
+    .avatar-uploader .el-upload{
+        border:1px dashed #d9d9d9;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidder;
+    }
+
+    .avatar-uploader .el-upload:hover{
+        border-color: #20a0ff;
+    }
+
+    .avatar-uploader-icon{
+        font-size: 28px;
+        color: #8c939d;
+        width: 120px;
+        height: 120px;
+        line-height: 120px;
+        text-align: center;
+    }
+
+    .avatar{
+        width: 120px;
+        height: 120px;
+        display: block;
     }
 
 
