@@ -126,7 +126,7 @@
 
 
 <script>
-import {cityGuess, searchplace, listShopCategory, getShops, getShopsCount} from '@/api/getData'
+import {cityGuess, searchplace, listShopCategory, getShops, getShopsCount, updateShop, deleteShop} from '@/api/getData'
 import {baseUrl, baseImgPath} from '@/config/env'
 import headTop from '../headTop'
 export default {
@@ -240,8 +240,26 @@ export default {
 
         },
 
-        handleDelete(index, row){
-
+        async handleDelete(index, row){
+            try{
+                const res = await deleteShop({restaurant_id: row.id});
+                if(res.error_code === 0){
+                    this.$message({
+                        type:'success',
+                        message: '删除成功'
+                    })
+                }else{
+                    this.$message({
+                        type:'error',
+                        message: res.error_type
+                    })
+                }
+            }catch(err ){
+                this.$message({
+                    type:'error',
+                    message: '删除失败'
+                })
+            }
         },
 
 
@@ -273,8 +291,44 @@ export default {
             this.selectedShop.longitude = address.longitude;
         },
 
-        updateShop(){
+        handleServiceAvatarSuccess(res, file){
+            if(res.error_code === 0){
+                this.selectedShop.image_path = res.image_path;
+            }else{
+                this.$message.error('上传图片失败！')
+            }
+        },
+
+        beforeAvatarUpload(file){
+            const isRightType = (file.type === 'image/jpeg') || (file.type === 'image/png');
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if(!isRightType){
+                this.$message.error('上传头像图片只能是JPG格式或者png格式');
+            }
+            if(!isLt2M){
+                this.$message.error('上传头像图片大小不能超过2MB');
+            }
+            return isRightType && isLt2M;
+        },
+
+        async updateShop(){
             this.dialogFormVisible = false;
+            try{
+                this.selectedShop.category = this.selectedCategory.join('/');
+                const res = await updateShop(this.selectedShop);
+                if(res.error_code === 0){
+                    this.$message({
+                        type: 'success',
+                        message: '更新店铺信息成功'
+                    })
+                    this.getShops();
+                }
+            }catch(err ){
+                this.$message({
+                    type: 'error',
+                    message: res.error_type
+                })
+            }
         }
     },
     components: {

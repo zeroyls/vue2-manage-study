@@ -22,6 +22,11 @@ export const getShops = data => fetch('/shopping/shop/list', data);
 //获取商铺列表
 export const getShopsCount = () => fetch('/shopping/shop/getCount');
 
+//更新商铺
+export const updateShop = (data) => fetch('/shopping/shop/update', data, 'POST');
+
+//删除商铺
+export const deleteShop = (data) => fetch('/shopping/shop/delete', data);
 
 //helper function
 //获取定位城市
