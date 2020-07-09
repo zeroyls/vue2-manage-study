@@ -76,7 +76,7 @@
 							}">
 						</el-time-select>
                     </el-form-item>
-                    <el-form-item label = "上传店铺头像">
+                    <el-form-item label = "上传店铺头像" prop = "image_path">
                         <el-upload
                             class = "avatar-uploader"
                             :action = "baseUrl + '/v1/addimg/shop'"
@@ -197,6 +197,10 @@ export default {
                 phone: [
                     {required: true, message: '请输入联系电话'},
                     {type: 'number', message: '电话号码必须是数字'}
+                ],
+                image_path: [
+                    {required: true, message: '请上传店铺图片'},
+                    {type: 'string'}
                 ]
             },
             activityOptions: [{

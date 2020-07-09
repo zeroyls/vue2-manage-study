@@ -1,4 +1,5 @@
 import fetch from '@/config/fetch';
+import { data } from 'autoprefixer';
 
 
 // 登录
@@ -36,3 +37,11 @@ export const searchplace = (cityid, value ) => fetch('/v1/search', {
     city_id: cityid,
     keyword: value,
 })
+
+export const addMenu = (data) => fetch('/shopping/menu/add', data, 'POST');
+
+export const listMenu = (data) => fetch('/shopping/menu/list', data);
+
+export const getMenu = (data) => fetch('/shopping/menu/get', data)
+
+export const addFood = (data) => fetch('/shopping/food/add', data, 'POST')

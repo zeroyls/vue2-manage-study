@@ -1,14 +1,14 @@
 <template>
     <div>
         <head-top></head-top>
-        <el-row>
+        <el-row style = "margin-top: 20px">
             <el-col :span = "14" :offset = "4">
-                <header>选择食品种类</header>
-                <el-form :model = "categoryForm">
-                    <el-row >
+                <header class="form_header">选择食品种类</header>
+                <el-form :model = "categoryForm" ref = "categoryForm" class = "form">
+                    <el-row class = "category_select">
                         <el-form-item label = "食品种类">
                             <el-select v-model = "categoryForm.categorySelect"
-                                :placeholder="selectValue.label">
+                                :placeholder="selectValue.label" style = "width: 100%">
                                 <el-option
                                     v-for = "item in categoryForm.categoryList"
                                     :key = "item.value"
@@ -19,7 +19,7 @@
                         </el-form-item>
                     </el-row>
                     <el-row class = "add_category_row" :class="showAddCategory? 'showEdit': ''">
-                        <div class = "add_catefory">
+                        <div class = "add_category">
                             <el-form-item label = "食品种类" prop = "name">
                                 <el-input v-model = "categoryForm.name"></el-input>
                             </el-form-item>
@@ -40,7 +40,7 @@
                 </el-form>
 
                 <header class = "form_header">添加食品</header>
-                <el-form :model = "foodForm" :rules = "foodrules">
+                <el-form :model = "foodForm" :rules = "foodrules" ref = "foodForm" class = "form food_form">
                     <el-form-item label = "食品名称" prop = "name">
                         <el-input v-model = "foodForm.name"></el-input>
                     </el-form-item>
@@ -51,12 +51,29 @@
                         <el-input v-model = "foodForm.description"></el-input>
                     </el-form-item>
                     <el-form-item label = "上传食品图片">
-                        <el-upload>
+                        <el-upload
+                            class = "avatar-uploader"
+                            :action = "baseUrl + '/v1/addimg/food'"
+                            :show-file-list="false"
+                            :on-success = "handleImgSuccess"
+                            :before-upload="beforeImgUpload">
+                            <img v-if = "foodForm.image_path" :src = "baseImgPath + foodForm.image_path" class = "avatar"/>
+                            <i v-else class = "el-icon-plus avatar-uploader-icon"></i>
                         </el-upload>
+                    </el-form-item>
+                    <el-form-item label = "食品特点">
+                        <el-select v-model = "foodForm.attributes" multiple placeholder = "请选择">
+                            <el-option
+                                v-for = "item in attributes"
+                                :key = "item.value"
+                                :label = "item.label"
+                                :value = "item.value">
+                            </el-option>
+                        </el-select>
                     </el-form-item>
                     <el-form-item label = "食品规格">
                         <el-radio class = "radio" v-model = "foodSpecs" label = "one">单规格</el-radio>
-                        <el-radio class = "radio" v-model="foodSpecs" label = "more">多规格</el-radio>
+                        <el-radio class = "radio" v-model = "foodSpecs" label = "more">多规格</el-radio>
                     </el-form-item>
                     <el-row v-if = "foodSpecs == 'one'">
                         <el-form-item label = "包装费">
@@ -125,9 +142,14 @@
 
 <script>
 import headTop from '../headTop'
+import {baseUrl, baseImgPath} from '@/config/env'
+import {addMenu, listMenu, getMenu, addFood} from '@/api/getData'
 export default {
     data(){
         return {
+            baseUrl,
+            baseImgPath,
+            restaurant_id: 1,
             categoryForm: {
                 categoryList: [],
                 categorySelect: '',
@@ -146,6 +168,19 @@ export default {
                     price: 20,
                 }],
             },
+            foodrules: {
+                name: [{required: true, message: '请输入食品名称', trigger: 'blur'}]
+            },
+            attributes: [
+                {
+                    value: '新',
+                    label: '新品'
+                },
+                {
+                    value: '招牌',
+                    label: '招牌'
+                }
+            ],
             showAddCategory: false,
             foodSpecs: 'one',
             dialogFormVisible: false,
@@ -166,10 +201,107 @@ export default {
             return this.categoryForm.categoryList[this.categoryForm.categorySelect]||{}
         }
     },
+
+    created(){
+        if(this.$route.query && this.$route.query.restaurant_id){
+            this.restaurant_id = this.$route.query.restaurant_id;
+        }else{
+            this.restaurant_id = Math.ceil(Math.random() * 10);
+            this.$msgbox({
+                title: '提示',
+                message: '添加食品需要选择一个商铺，先去选择商铺？',
+                showCancelButton: true,
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                beforeClose: (action, instance, done ) => {
+                    if(action === 'confirm'){
+                        this.$router.push('shopList');
+                        done();
+                    }else{
+                        this.$message({
+                            type: 'info',
+                            message: '取消'
+                        })
+                        done()
+                    }
+                }
+            })
+        }
+        this.initData();
+    },
+
     methods:{
-        submitcategoryForm(){
+        async initData(){
+            try{
+                const result = await listMenu({restaurant_id: this.restaurant_id, allMenu: true});
+                if(result.error_code === 0){
+                    result.menus.map((item, index) => {
+                        item.value = index;
+                        item.label = item.name;
+                    })
+                    this.categoryForm.categoryList = result.menus;
+                }else{
+                    throw new Error(result.error_type)
+                }
+            }catch(err ){
+                console.log(err)
+            }
+        },
+
+        submitcategoryForm(categoryForm){
+            this.$refs[categoryForm].validate(async(valid ) => {
+                if(valid){
+                    const params = {
+                        name: this.categoryForm.name,
+                        decription: this.categoryForm.description,
+                        restaurant_id: this.restaurant_id
+                    }
+                    try{
+                        const result = await addMenu(params);
+                        if(result.error_code === 0){
+                            this.initData();
+                            this.categoryForm.name = '';
+                            this.categoryForm.description = '';
+                            this.showAddCategory = false;
+                            this.$message({
+                                type:'success',
+                                message: '添加成功'
+                            })
+                        }
+                    }catch(err ){
+                        this.$notify.error({
+                            title: '错误',
+                            message: '请检查输入是否正确',
+                            offset: 100
+                        })
+                    }
+                }
+                
+            })
 
         },
+
+        handleImgSuccess(res, file){
+            if(res.error_code === 0){
+                this.foodForm.image_path = res.image_path;
+            }else{
+                this.$message.error('上传图片失败！')
+            }
+        },
+
+        beforeImgUpload(file){
+            const isRightType = (file.type === 'image/jpeg') || (file.type === 'image/png');
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if(!isRightType){
+                this.$message.error('上传头像图片只能是JPG格式或者png格式');
+            }
+            if(!isLt2M){
+                this.$message.error('上传头像图片大小不能超过2MB');
+            }
+            return isRightType && isLt2M;
+        },
+
+        
 
         addCategoryFun(){
             this.showAddCategory = !this.showAddCategory;
@@ -177,20 +309,74 @@ export default {
 
 
         //食品
-        addFood(food){
+        addFood(foodForm){
+            this.$refs[foodForm].validate(async (valid ) => {
+                if(valid){
+                    const params = {
+                        ...this.foodForm,
+                        menu_id: this.selectValue.id,
+                        restaurant_id: this.restaurant_id
+                    }
+                    try{
+                        const res = await addFood(params);
+                        if(res.error_code === 0){
+                            this.$message({
+                                type: 'success',
+                                message: '添加成功'
+                            })
+                            this.foodForm = {
+                                name: '',
+                                description: '',
+                                image_path: '',
+                                activity: '',
+                                attributes: [],
+                                specs: [{
+                                    specs: '默认',
+                                    packing_fee: 0,
+                                    price: 20
+                                }]
+                            }
+                        }else{
+                            this.$message({
+                                type: 'error',
+                                message: res.error_type
+                            })
+                        }
+                    }catch(err ){
+                        console.log(err)
+                        this.$message({
+                            type: 'error',
+                            message: '添加失败'
+                        })
+                    }
+                }else{
+                    this.$notify.error({
+                        title: '错误',
+                        message: '请检车输入是否正确',
+                        offset: 100
+                    })
+                    return false
+                }
+            })
 
         },
 
 
         //规格表格
         //删除规格
-        handleDelete(){
+        handleDelete(index){
+            this.foodForm.specs.splice(index, 1);
 
         },
 
         //规格对话框
         addSpecs(){
             this.dialogFormVisible = false;
+            this.foodForm.specs.push({...this.specsForm});
+            this.specsForm.specs = '';
+            this.specsForm.packing_fee = 0;
+            this.specsForm.price = 20;
+            
         }
     },
     components: {
@@ -201,6 +387,29 @@ export default {
 
 <style lang="less">
     @import '../../style/mixin';
+ 	.form{
+		min-width: 400px;
+		margin-bottom: 30px;
+		&:hover{
+			box-shadow: 0 0 8px 0 rgba(232,237,250,.6), 0 2px 4px 0 rgba(232,237,250,.5);
+			border-radius: 6px;
+			transition: all 400ms;
+		}
+	}
+	.food_form{
+		border: 1px solid #eaeefb;
+		padding: 10px 10px 0;
+	}
+	.form_header{
+		text-align: center;
+		margin-bottom: 10px;
+	}
+	.category_select{
+		border: 1px solid #eaeefb;
+		padding: 10px 30px 10px 10px;
+		border-top-right-radius: 6px;
+		border-top-left-radius: 6px;
+	}
 	.add_category_row{
 		height: 0;
 		overflow: hidden;
@@ -208,14 +417,15 @@ export default {
 		background: #f9fafc;
 	}
 	.showEdit{
-		height: 185px;
+		height: 277px;
 	}
 	.add_category{
 		background: #f9fafc;
 		padding: 10px 30px 0px 10px;
 		border: 1px solid #eaeefb;
-    }
-    .add_category_button{
+		border-top: none;
+	}
+	.add_category_button{
 		text-align: center;
 		line-height: 40px;
 		border-bottom-right-radius: 6px;
@@ -238,5 +448,30 @@ export default {
 			transition: all 400ms;
 		}
 	}
-
+	.avatar-uploader .el-upload {
+	    border: 1px dashed #d9d9d9;
+	    border-radius: 6px;
+	    cursor: pointer;
+	    position: relative;
+	    overflow: hidden;
+	}
+	.avatar-uploader .el-upload:hover {
+	    border-color: #20a0ff;
+	}
+	.avatar-uploader-icon {
+	    font-size: 28px;
+	    color: #8c939d;
+	    width: 120px;
+	    height: 120px;
+	    line-height: 120px;
+	    text-align: center;
+	}
+	.avatar {
+	    width: 120px;
+	    height: 120px;
+	    display: block;
+	}
+	.cell{
+		text-align: center;
+	}
 </style>
