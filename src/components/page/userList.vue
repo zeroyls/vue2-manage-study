@@ -27,10 +27,12 @@
             </el-table>
             <div class = "pagination" style = "text-align: left; margin-top: 10px">
                 <el-pagination
-                layout="total, prev, pager, next"
-                :current-page = "currentPage"
-                :page-size="20"
-                :total = "count">
+                    layout="total, prev, pager, next"
+                    :current-page = "currentPage"
+                    :page-size="20"
+                    :total = "count"
+                    @size-change = "handleSizeChange"
+                    @current-change = "handleCurrentChange">
                 </el-pagination>
             </div>
         </div>
@@ -40,32 +42,63 @@
 
 <script>
 import headTop from '../headTop'
+import {getUserList, getUserCount} from '@/api/getData'
 export default {
     data(){
         return {
-            tableData: [{
-                registe_time: '2016-05-02',
-                username: '王小虎',
-                city: '上海市普陀区金沙江路 1518 弄'
-            }, {
-                registe_time: '2016-05-04',
-                username: '王小虎',
-                city: '上海市普陀区金沙江路 1517 弄'
-            }, {
-                registe_time: '2016-05-01',
-                username: '王小虎',
-                city: '上海市普陀区金沙江路 1519 弄'
-            }, {
-                registe_time: '2016-05-03',
-                username: '王小虎',
-                city: '上海市普陀区金沙江路 1516 弄'
-            }],
+            tableData: [],
             currentRow: 1,
             offset: 0,
             limit: 20,
-            count: 4,
+            count: 0,
             currentPage: 1
         }
+    },
+
+    created(){
+        this.initData()
+    },
+
+    methods: {
+        async initData(){
+            try{
+                const countRes = await getUserCount();
+                if(countRes.error_code === 0){
+                    this.count = countRes.count;
+                }else{
+                    throw new Error('获取数据失败');
+                }
+                this.getUsers();
+            }catch(err ){
+                console.log(err)
+            }
+        },
+        async getUsers(){
+            const usersRes = await getUserList({offset: this.offset, limit:this.limit});
+            this.tableData = [];
+            if(usersRes.error_code === 0){
+                const users = usersRes.users;
+                users.forEach(item => {
+                    const user = {};
+                    user.username = item.username;
+                    user.registe_time = item.registe_time;
+                    user.city = item.city;
+                    this.tableData.push(user);
+                });
+                this.tableData = usersRes.users;
+            }
+        },
+
+        handleSizeChange(val){
+            console.log(`每页${val}条`)
+        },
+
+        handleCurrentChange(val){
+            this.currentPage = val;
+            this.offset = (val - 1) * this.limit;
+            this.getUsers();
+        }
+
     },
 
     components: {

@@ -45,3 +45,8 @@ export const listMenu = (data) => fetch('/shopping/menu/list', data);
 export const getMenu = (data) => fetch('/shopping/menu/get', data)
 
 export const addFood = (data) => fetch('/shopping/food/add', data, 'POST')
+
+
+export const getUserList = data => fetch('/v2/user/list', data);
+
+export const getUserCount = () => fetch('/v2/user/getcount')
